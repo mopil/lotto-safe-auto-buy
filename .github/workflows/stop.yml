@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   stop:
+    if: github.repository != 'mopil/lotto-safe-auto-buy'   # 템플릿 원본에선 돌지 않는다 — 내 레포에서만
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

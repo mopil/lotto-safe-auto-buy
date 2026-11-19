@@ -311,6 +311,17 @@ def test_no_payment_retry_in_source():
     assert "retry" not in src.lower(), "결제 경로에 재시도가 들어오면 안 된다"
 
 
+def test_workflows_skip_template_origin_and_refuse_public_repo():
+    """원본 템플릿 레포에선 안 돈다 · 구매·결과·설정은 Public 레포면 멈춘다 (예치금·구매 내역이 공개 로그에 남지 않게)."""
+    wf = ROOT / ".github" / "workflows"
+    for name in ("buy", "check", "setup", "stop"):
+        text = (wf / f"{name}.yml").read_text(encoding="utf-8")
+        assert "github.repository != 'mopil/lotto-safe-auto-buy'" in text, name
+    for name in ("buy", "check", "setup"):
+        text = (wf / f"{name}.yml").read_text(encoding="utf-8")
+        assert "--jq .private" in text and "exit 1" in text, name
+
+
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     lotto.db.init()

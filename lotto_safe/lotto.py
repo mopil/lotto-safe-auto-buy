@@ -280,9 +280,9 @@ class LocalFileStore:
         try:
             state = json.loads(STATE.read_text(encoding="utf-8"))
         except (OSError, ValueError) as e:
-            raise StateError(f"state.json 을 못 읽음 ({type(e).__name__}) — 고칠 때까지 안 사") from e
+            raise StateError(f"state.json 을 못 읽음 ({type(e).__name__}) — 고칠 때까지 사지 않아요") from e
         if not isinstance(state, dict):
-            raise StateError("state.json 모양이 다름 — 고칠 때까지 안 사")
+            raise StateError("state.json 모양이 다름 — 고칠 때까지 사지 않아요")
         return state
 
     def save(self, state: dict) -> None:
@@ -357,7 +357,7 @@ def make_backend(name: str | None) -> Backend:
         return Backend("local", LocalFileStore(), EnvProvider(), ChannelNotifier())
     if name == "actions":
         return Backend("actions", GitBranchStore(), EnvProvider(), ChannelNotifier())
-    raise StateError(f"{BACKEND_ENV}={name!r} 모름 (local | actions) — 안 사")
+    raise StateError(f"{BACKEND_ENV}={name!r} 모름 (local | actions) — 사지 않아요")
 
 
 def backend() -> Backend:
@@ -855,7 +855,7 @@ def order_anomalies(orders: list[dict]) -> list[dict]:
         found.append({"key": f"{game}:{round_no}:{'+'.join(order_nos)}", "kind": "order", "extra": extra,
                       "what": f"내가 안 산 {GAME_LABEL[game]} 주문",
                       "detail": f"{GAME_LABEL[game]} {round_no}회 {count}{GAME_UNIT[game]} 중 {extra}{GAME_UNIT[game]}({won(extra * GAME_PRICE)})은 "
-                                f"내 결제 기록에 없어 · 주문번호 끝 {tails} · 구입일 {days}"})
+                                f"내 결제 기록에 없어요 · 주문번호 끝 {tails} · 구입일 {days}"})
     return found
 
 
@@ -1165,18 +1165,18 @@ def buy_pension(client: RawLotteryClient, round_no: int) -> dict:
         game.open()
         info = game.round_info()
     except Exception as e:  # noqa: BLE001
-        alert("pension-open", "연금 구매 준비 실패", f"{round_no}회 연금 게임 페이지를 못 열어서 안 샀어 (돈 안 나감): {brief(str(e), 120)}")
+        alert("pension-open", "연금 구매 준비 실패", f"{round_no}회 연금 게임 페이지를 못 열어서 안 샀어요 (돈 안 나감): {brief(str(e), 120)}")
         return {"error": "준비 실패"}
     # 사이트 회차·판매 여부가 날짜 계산과 다르면 안 산다 (설·추석 휴무로 회차가 밀리는 경우 등)
     if str(info.get("ROUND")) != str(round_no) or info.get("IS_SALE_FLAG") != "true":
         alert("pension-round", "연금 회차 불일치",
               f"계산 {round_no}회 · 사이트 {brief(info.get('ROUND'))}회 판매중={brief(info.get('IS_SALE_FLAG'))} "
-              f"(마감 {brief(info.get('CLOSE_DATE_TIME'))}). 안 샀어 — 회차 공식 확인 필요.")
+              f"(마감 {brief(info.get('CLOSE_DATE_TIME'))}). 안 샀어요 — 회차 공식 확인 필요.")
         return {"error": "회차 불일치"}
     try:
         number = game.assign_set_number(round_no)
     except Exception as e:  # noqa: BLE001
-        alert("pension-number", "연금 번호 배정 실패", f"{round_no}회 번호를 못 받아서 안 샀어 (돈 안 나감): {brief(str(e), 120)}")
+        alert("pension-number", "연금 번호 배정 실패", f"{round_no}회 번호를 못 받아서 안 샀어요 (돈 안 나감): {brief(str(e), 120)}")
         return {"error": "번호 배정 실패"}
     if DRY:
         print(f"[DRY] 연금 {round_no}회 (마감 {brief(info.get('CLOSE_DATE_TIME'))}) · 배정 번호 {number} → "
@@ -1193,13 +1193,13 @@ def buy_pension(client: RawLotteryClient, round_no: int) -> dict:
     except Exception as e:  # noqa: BLE001
         if marked:
             alert("pension-unknown", "연금 결제 결과 불명 — 구매내역 확인",
-                  f"{round_no}회 {number} 세트 결제 요청 뒤 응답을 못 받았어: {brief(str(e), 120)}. 이번 회차는 다시 안 사. 동행복권 구매내역 확인해줘.")
+                  f"{round_no}회 {number} 세트 결제 요청 뒤 응답을 못 받았어요: {brief(str(e), 120)}. 이번 회차는 다시 사지 않아요. 동행복권 구매내역 확인해 주세요.")
             return {"error": "결과 불명", "attempted": True}
         alert("pension-order", "연금 주문 실패", f"{round_no}회 결제 요청 전에 멈춤 (돈 안 나감): {brief(str(e), 120)}")
         return {"error": "주문 실패"}
     if paid["code"] != pension720.SUCCESS:
         alert("pension-unknown", "연금 결제 결과 불명 — 구매내역 확인",
-              f"{round_no}회 {number} 세트 결제 응답 코드 {brief(paid['code'])} ({paid.get('msg') or '설명 없음'}). 이번 회차는 다시 안 사. 구매내역 확인해줘.")
+              f"{round_no}회 {number} 세트 결제 응답 코드 {brief(paid['code'])} ({paid.get('msg') or '설명 없음'}). 이번 회차는 다시 사지 않아요. 구매내역 확인해 주세요.")
         return {"error": f"결제 코드 {brief(paid['code'])}", "attempted": True}
     return {"number": number, "tickets": len(paid["tickets"]), "attempted": True}
 
@@ -1217,7 +1217,7 @@ def reserve_pension(client: RawLotteryClient, cur_round: int, rounds: list[int],
             raise pension720.PensionError(f"회차 불일치 — 계산 {cur_round}회 · 사이트 {brief(info.get('ROUND'))}회 판매중={brief(info.get('IS_SALE_FLAG'))}")
         win_dates = pension720.reserve_draw_dates(info, cur_round, rounds)
     except Exception as e:  # noqa: BLE001
-        alert("reserve-open", "연금 예약 준비 실패", f"{rounds[0]}-{rounds[-1]}회 예약을 준비하다 멈췄어 (돈 안 나감): {brief(str(e), 120)}")
+        alert("reserve-open", "연금 예약 준비 실패", f"{rounds[0]}-{rounds[-1]}회 예약을 준비하다 멈췄어요 (돈 안 나감): {brief(str(e), 120)}")
         return {"error": "준비 실패"}
     if DRY:
         print(f"[DRY] 연금 예약 계획: {rounds[0]}-{rounds[-1]}회 ({len(rounds)}회차 · 추첨 {win_dates[0]} - {win_dates[-1]}) 모든 조 세트 1개씩 "
@@ -1259,10 +1259,10 @@ def lotto_round_stop(round_no: int) -> str | None:
     try:
         site_round = site_lotto_round()
     except Exception as e:  # noqa: BLE001
-        alert("lotto-round", "로또 회차 확인 실패 — 안 삼", f"사이트에서 지금 회차를 못 읽어서 {round_no}회를 안 샀어 (돈 안 나감): {pension720.short_text(str(e), 120)}")
+        alert("lotto-round", "로또 회차 확인 실패 — 안 삼", f"사이트에서 지금 회차를 못 읽어서 {round_no}회를 안 샀어요 (돈 안 나감): {pension720.short_text(str(e), 120)}")
         return "회차 확인 실패"
     if site_round != round_no:
-        alert("lotto-round", "로또 회차 불일치 — 안 삼", f"계산 {round_no}회 · 사이트 {site_round}회 (마지막 추첨 회차 + 1). 안 샀어 — 회차 공식 확인 필요.")
+        alert("lotto-round", "로또 회차 불일치 — 안 삼", f"계산 {round_no}회 · 사이트 {site_round}회 (마지막 추첨 회차 + 1). 안 샀어요 — 회차 공식 확인 필요.")
         return "회차 불일치"
     return None
 
@@ -1281,7 +1281,7 @@ def buy_lotto(client: RawLotteryClient, capture: Capture, round_no: int, games: 
     try:
         mark_lotto_attempt(round_no, games)
     except Exception as e:  # noqa: BLE001
-        alert("buy", "로또 구매 안 함", f"{round_no}회 결제 시도 기록을 못 써서 안 샀어 (돈 안 나감): {pension720.short_text(str(e), 120)}")
+        alert("buy", "로또 구매 안 함", f"{round_no}회 결제 시도 기록을 못 써서 안 샀어요 (돈 안 나감): {pension720.short_text(str(e), 120)}")
         return {"error": "시도 기록 실패"}
     try:
         client.buy_lotto645(Lotto645Ticket.create_auto_tickets(games))
@@ -1304,7 +1304,7 @@ def read_balance(client: RawLotteryClient, capture: Capture, buying: bool = True
         client.show_balance()
     except Exception as e:  # noqa: BLE001
         if buying:
-            alert("balance", "예치금 조회 실패", f"예치금을 못 읽어서 안 샀어: {pension720.short_text(str(e), 120)}")
+            alert("balance", "예치금 조회 실패", f"예치금을 못 읽어서 안 샀어요: {pension720.short_text(str(e), 120)}")
         else:
             print(f"[lotto] 예치금 조회 실패 (잔액 이상징후 감지는 건너뜀): {e}")
         return None
@@ -1333,7 +1333,7 @@ def purchase_message(rounds: dict[str, int], results: dict[str, dict], week_won:
         lines.append(f"로또 {rounds[LOTTO]}회: " + (picked or f"자동 {lotto['games']}게임 (번호는 구매내역에서)"))
     if not lines:
         return None
-    return "\n".join(["이번 주 복권을 샀어요 🍀", *lines, f"(이번 주 {won(week_won)} / 한도 {won(WEEKLY_CAP_WON)})"])
+    return "\n".join(["이번 주 복권을 샀어요 🍀", *lines, f"(이번 주 {won(week_won)} · 설정한 한도 {won(WEEKLY_CAP_WON)} 안)"])
 
 
 def reserve_message(rounds: list[int], paid_won: int) -> str:
@@ -1384,23 +1384,23 @@ def verify_purchases(client: RawLotteryClient, capture: Capture, rounds: dict[st
             # dhapi 가 응답을 못 읽었을 때('알 수 없는 오류')는 서버가 거절했다는 뜻이 아니다 — 결제가 됐는지 모른다
             no_reply = UNKNOWN_ERROR_MARK in str(lotto.get("detail") or "")
             if now_has is None:
-                verdict = "결과 불명 — 구매내역도 못 읽었어. 동행복권 구매내역 확인해줘"
+                verdict = "결과 불명 — 구매내역도 못 읽었어요. 동행복권 구매내역 확인해 주세요"
             elif now_has > had:
-                verdict = f"응답은 실패인데 구매내역엔 {now_has - had}게임이 새로 있어 (돈 나감)"
+                verdict = f"응답은 실패인데 구매내역엔 {now_has - had}게임이 새로 있어요 (돈 나감)"
             elif no_reply:
-                verdict = "결과 불명 — 응답을 못 읽었고 지금 구매내역엔 없어 (늦게 뜰 수 있으니 구매내역·예치금 확인해줘)"
+                verdict = "결과 불명 — 응답을 못 읽었고 지금 구매내역엔 없어요 (늦게 뜰 수 있으니 구매내역·예치금 확인해 주세요)"
             else:
-                verdict = "실패 — 구매내역에 없어 (돈 안 나감)"
+                verdict = "실패 — 구매내역에 없어요 (돈 안 나감)"
             # 서버가 사유를 대며 거절했고 구매내역도 그대로일 때만 '실패'. 나머지는 전부 '결과 불명'
             refused = now_has == had and not no_reply
             alert("buy", "로또 구매 실패" if refused else "로또 구매 결과 불명 — 구매내역 확인",
-                  f"{r}회 자동 {games}게임: {verdict}. ({lotto.get('detail')}) 이번 회차 이 {games}게임은 다시 안 사 "
+                  f"{r}회 자동 {games}게임: {verdict}. ({lotto.get('detail')}) 이번 회차 이 {games}게임은 다시 사지 않아요 "
                   f"(다시 사려면 state.json lotto_attempts 의 {r} 을 지워).")
         elif not visible:
             stopped = True
             halt(LOTTO, r, "산 게 구매내역에 안 보임")
             alert("buy-verify", "로또 구매 확인 안 됨", f"{r}회 {games}게임을 샀다는데 구매내역에 안 보여"
-                  f"{'' if after is not None else ' (구매내역 재조회 실패)'}. 이번 회차는 더 안 사 — 구매내역 확인해줘.")
+                  f"{'' if after is not None else ' (구매내역 재조회 실패)'}. 이번 회차는 더 사지 않아요 — 구매내역 확인해 주세요.")
     if pension.get("attempted") and "error" not in pension:
         r = rounds[PENSION]
         # >= : 세트 5장이 다 보여야 확인된 것
@@ -1408,7 +1408,7 @@ def verify_purchases(client: RawLotteryClient, capture: Capture, rounds: dict[st
             stopped = True
             halt(PENSION, r, "산 게 구매내역에 안 보임")
             alert("buy-verify-pension", "연금 구매 확인 안 됨", f"{r}회 세트를 샀다는데 구매내역에 {PENSION_TICKETS_PER_SET}장이 안 보여"
-                  f"{'' if after is not None else ' (구매내역 재조회 실패)'}. 이번 회차는 더 안 사 — 구매내역 확인해줘.")
+                  f"{'' if after is not None else ' (구매내역 재조회 실패)'}. 이번 회차는 더 사지 않아요 — 구매내역 확인해 주세요.")
     return stopped
 
 
@@ -1457,7 +1457,7 @@ def settle_reservation(client: RawLotteryClient, capture: Capture, rounds: list[
     if untouched and result.get("rejected") and paid_won is not None and paid_won <= 0:
         set_reserve_result(rounds, "failed", **seen)
         alert("reserve-failed", "연금 예약 실패", f"{span} 예약을 서버가 거절했고 예약내역에도 없고 예치금도 그대로야 (돈 안 나감): {result.get('detail')}. "
-              f"예약은 다시 시도 안 하고, 이 회차들은 그 주에 한 세트씩 직접 사. 예약을 다시 걸려면 state.json pension_reserve_attempts 의 이 줄을 지워.")
+              f"예약은 다시 시도 안 하고, 이 회차들은 그 주에 한 세트씩 직접 사요. 예약을 다시 걸려면 state.json pension_reserve_attempts 의 이 줄을 지워.")
         return {"error": result.get("error") or "예약 실패", "attempted": True}
     set_reserve_result(rounds, "unknown", **seen)
     full = [r for r, q in got.items() if q == PENSION_MAX_TICKETS]
@@ -1466,7 +1466,7 @@ def settle_reservation(client: RawLotteryClient, capture: Capture, rounds: list[
         + (f" · 예약 안 한 회차가 바뀜 {', '.join(f'{r}회 {q}장' for r, q in stray.items())}" if stray else ""))
     money = "예치금을 못 읽었어" if paid_won is None else f"예치금 {won(deposit_before)} → {won(deposit_after)} (줄어든 돈 {won(paid_won)} · 예약 값 {won(cost)})"
     alert("reserve-unknown", "연금 예약 결과 불명 — 예약내역 확인", f"{span} 예약 요청을 보냈는데 확인이 안 맞아: {where} · {money} ({result.get('detail') or '응답은 성공'}). "
-          f"예약된 걸로 치고 이 회차들은 안 사 — 동행복권 예약구매 내역·예치금 확인해줘. {RESERVE_MARK_HINT}")
+          f"예약된 걸로 치고 이 회차들은 사지 않아요 — 동행복권 예약구매 내역·예치금 확인해 주세요. {RESERVE_MARK_HINT}")
     return {"error": "예약 결과 불명", "attempted": True}
 
 
@@ -1480,7 +1480,7 @@ def warn_pending_reserve() -> None:
     if stuck:
         spans = ", ".join(f"{a['rounds'][0]}-{a['rounds'][-1]}회" for a in stuck if a.get("rounds"))
         alert("reserve-pending", "연금 예약 요청 중 끊김 — 예약내역 확인", f"{spans} 예약 요청을 보내는 도중 실행이 끊겨서 됐는지 몰라. "
-              f"예약된 걸로 치고 이 회차들은 안 사. 동행복권 예약구매 내역·예치금 확인해줘. {RESERVE_MARK_HINT}")
+              f"예약된 걸로 치고 이 회차들은 사지 않아요. 동행복권 예약구매 내역·예치금 확인해 주세요. {RESERVE_MARK_HINT}")
 
 
 def resolve_reserve_attempts(reservations: list[dict], balance: int | None) -> None:
@@ -1510,11 +1510,11 @@ def resolve_reserve_attempts(reservations: list[dict], balance: int | None) -> N
         elif not any(got) and money_kept and a.get("rejected") is True:
             set_reserve_result(rounds, "failed")
             alert("reserve-failed", "연금 예약 안 된 걸로 확인", f"결과 불명이던 {span} 예약: 서버가 거절했었고 예약내역에 없고 예치금도 안 줄었어 (돈 안 나감). "
-                  f"실패로 적었고 이 회차들은 그 주에 한 세트씩 직접 사. 예약을 다시 걸려면 state.json pension_reserve_attempts 의 이 줄을 지워.")
+                  f"실패로 적었고 이 회차들은 그 주에 한 세트씩 직접 사요. 예약을 다시 걸려면 state.json pension_reserve_attempts 의 이 줄을 지워.")
         elif a.get("result") == "pending":
             set_reserve_result(rounds, "unknown")
             alert("reserve-unknown", "연금 예약 결과 불명 — 예약내역 확인", f"끊겼던 {span} 예약 요청: 예약내역엔 회차별 {', '.join(f'{r}회 {q}장' for r, q in zip(rounds, got))}. "
-                  f"예약된 걸로 치고 이 회차들은 안 사 — 동행복권 예약구매 내역·예치금 확인해줘. {RESERVE_MARK_HINT}")
+                  f"예약된 걸로 치고 이 회차들은 사지 않아요 — 동행복권 예약구매 내역·예치금 확인해 주세요. {RESERVE_MARK_HINT}")
 
 
 def cmd_buy() -> None:
@@ -1555,7 +1555,7 @@ def cmd_buy() -> None:
     try:
         orders = fetch_orders(client, capture, BUY_LOOKBACK_DAYS)
     except Exception as e:  # noqa: BLE001
-        alert("buy-list", "구매내역 조회 실패", f"구매내역을 못 읽어서 안 샀어 (중복 구매 방지): {pension720.short_text(str(e), 120)}")
+        alert("buy-list", "구매내역 조회 실패", f"구매내역을 못 읽어서 안 샀어요 (중복 구매 방지): {pension720.short_text(str(e), 120)}")
         emit(ok=False, error="구매내역 조회 실패")
         return
     if not DRY:
@@ -1586,7 +1586,7 @@ def cmd_buy() -> None:
     try:
         have = round_have(orders, reservations, rounds.get(LOTTO), pension_rounds)
     except CapError as e:
-        alert("cap-count", "이미 산 양을 못 셈 — 안 삼", f"{e}. 회차 상한(주 {won(WEEKLY_CAP_WON)})을 지키려고 이번 실행은 안 샀어. 구매내역 확인해줘.")
+        alert("cap-count", "이미 산 양을 못 셈 — 안 삼", f"{e}. 설정한 한도({won(WEEKLY_CAP_WON)})를 지키려고 이번 실행은 안 샀어요. 구매내역 확인해 주세요.")
         emit(ok=False, error=f"구매량 못 셈: {e}")
         return
     if reservations_read and cur is not None and not DRY:
@@ -1628,8 +1628,8 @@ def cmd_buy() -> None:
     if short > 0:
         alert("deposit", "예치금 부족 — 가상계좌 충전 필요",
               f"연금 {pension_need}세트·로또 {lotto_need}게임{f'·연금 예약 {won(reserve_cost)}' if reserve_cost else ''} 사려는데 구매가능 {won(buyable)} → "
-              f"연금 {sets}세트·로또 {games}게임{'·예약' if reserve_rounds else ''}만 삼 ({won(short)} 모자람). 동행복권 가상계좌로 충전해줘. 오늘은 더 로그인 안 해"
-              f"{' (예약은 이번 주엔 다시 안 봐 — 다음 주 월요일에)' if reserve_short else ''}.")
+              f"연금 {sets}세트·로또 {games}게임{'·예약' if reserve_rounds else ''}만 샀어요 ({won(short)} 모자람). 동행복권 가상계좌로 충전해 주세요. 오늘은 더 로그인 안 해"
+              f"{' (예약은 이번 주엔 다시 안 봐요 — 다음 주 월요일에)' if reserve_short else ''}.")
         if not DRY:
             mark_deposit_short(now_kst())
     if DRY:
@@ -1673,7 +1673,7 @@ def reserve_step(client: RawLotteryClient, capture: Capture, cur: int, rounds: l
     ② 요청 직전에 예치금을 다시 읽어, 계산한 값(시작 예치금 − 방금 산 것)과 다르면 건너뜀
     그 뒤 예약 요청 → settle_reservation 이 예약내역·예치금으로 판정."""
     if trouble:
-        print("[lotto] 연금 예약 안 함: 이번 실행의 앞 단계에 실패·결과 불명·확인 안 됨이 있어 (다음 실행이 다시 본다)")
+        print("[lotto] 연금 예약 안 함: 이번 실행의 앞 단계에 실패·결과 불명·확인 안 됨이 있어요 (다음 실행이 다시 본다)")
         return {"skipped": "앞 단계 문제 — 이번 실행은 예약 안 함"}
     deposit = expected_deposit
     if not DRY:
@@ -1967,7 +1967,7 @@ def reserve_left_line(now: datetime) -> str | None:
     if left > 1:
         return None
     if not reserve_enabled():
-        return f"연금 예약 {left}주 남음 — 자동 예약은 꺼져 있어서 그 뒤론 매주 한 세트씩 직접 사"
+        return f"연금 예약 {left}주 남음 — 자동 예약은 꺼져 있어서 그 뒤론 매주 한 세트씩 직접 사요"
     return f"연금 예약 {left}주 남음 — 다음 구매 때 {PENSION_RESERVE_ROUNDS}주치 {won(RESERVE_COST)} 다시 예약 (예치금 확인)"
 
 
@@ -2018,7 +2018,7 @@ def abandon_stale_lotto(now: datetime) -> None:
     if not fresh:
         return
     alert("abandoned", "로또 결과 확인 포기 — 직접 확인", f"{', '.join(f'{r}회' for r in fresh)}는 구입한 지 {CHECK_LOOKBACK_DAYS}일이 넘어 "
-          "구매내역 조회에 안 잡혀. 이 회차 때문에 더 로그인하지 않을게 — 결과는 동행복권 구매내역에서 직접 봐줘 (손익엔 안 들어가).")
+          "구매내역 조회에 안 잡혀요. 이 회차 때문에 더 로그인하지 않을게요 — 결과는 동행복권 구매내역에서 직접 봐 주세요 (손익엔 안 들어가요).")
     if DRY:
         return
     for r in fresh:
@@ -2027,7 +2027,7 @@ def abandon_stale_lotto(now: datetime) -> None:
 
 
 def buy_job_enabled() -> bool:
-    """자동 구매가 켜져 있나 (config enabled). 못 읽으면 False — 꺼진 걸로 보고 '안 샀어' 알림을 안 낸다."""
+    """자동 구매가 켜져 있나 (config enabled). 못 읽으면 False — 꺼진 걸로 보고 '안 샀어요' 알림을 안 낸다."""
     try:
         return settings.load_config().get("enabled") is True
     except settings.SettingsError:
@@ -2042,12 +2042,12 @@ def warn_not_bought(now: datetime) -> None:
     state = load_state()
     told = state.setdefault("not_bought_told", {})
     latest = {game: latest_of(now) for game, latest_of in LATEST_DRAWN.items() if game in ENABLED_GAMES}
-    # 처음 보는 게임은 지금 회차를 기준으로만 적는다 (알림 없음) — 자동 구매를 켜기 전 회차까지 '안 샀어'라고 하지 않게
+    # 처음 보는 게임은 지금 회차를 기준으로만 적는다 (알림 없음) — 자동 구매를 켜기 전 회차까지 '안 샀어요'라고 하지 않게
     first_seen = [g for g in latest if g not in told]
     # == 0 : 한 장이라도 있으면 산 주다 (덜 산 건 구매 쪽 경보가 따로 알린다)
     missed = [(g, r) for g, r in latest.items() if g in told and told[g] != r and db_tickets(g, r) == 0]
     if missed:
-        alert("not-bought", "이번 주 안 샀어", f"{' · '.join(f'{GAME_LABEL[g]} {r}회' for g, r in missed)} — 추첨이 끝났는데 구매 기록이 한 장도 없어 "
+        alert("not-bought", "이번 주 안 샀어요", f"{' · '.join(f'{GAME_LABEL[g]} {r}회' for g, r in missed)} — 추첨이 끝났는데 구매 기록이 한 장도 없어요 "
               "(자동 구매는 켜져 있음). 예치금·로그인 멈춤(login_blocked)·Actions 실행 기록을 확인해 주세요.")
     if DRY or not (missed or first_seen):
         return
@@ -2218,13 +2218,13 @@ def cmd_check() -> None:
             # buy 와 같게 알린다 — 못 읽은 줄이 있으면 이상징후 감지를 못 하는데, 조용히 건너뛰면 감지가 꺼진 걸 아무도 모른다
             alert("check-unknown", "구매내역에 못 읽은 줄 — 이상징후 감지 건너뜀",
                   f"구매내역에 못 읽은 줄 {len(unreadable)}개 ({', '.join(row_label(o) for o in unreadable)}). "
-                  "이번 실행은 계정 이상징후를 못 봤어 — 동행복권 구매내역 확인해줘.")
+                  "이번 실행은 계정 이상징후를 못 봤어 — 동행복권 구매내역 확인해 주세요.")
         else:
             detect_anomalies(orders, read_balance(client, capture, buying=False), now)   # 알림만 — check 는 사는 게 없다
     warn_not_bought(now)
     sent, late = notify_results(now)
     if late:
-        alert("result-late", "결과 못 가져옴", f"{', '.join(late)} 추첨 끝났는데 결과가 아직 비어 있어. 사이트 확인 필요.")
+        alert("result-late", "결과 못 가져옴", f"{', '.join(late)} 추첨 끝났는데 결과가 아직 비어 있어요. 사이트 확인 필요.")
     emit(ok=True, dry=DRY or None, notified=sent, late=late)
 
 

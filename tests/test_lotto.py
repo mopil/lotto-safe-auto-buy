@@ -878,7 +878,7 @@ def test_reserves_five_rounds_once_when_none_reserved():
     assert ("pension", PENSION_ROUND) in calls and ("execBuy", 3) in calls    # 이번 회차는 직접 + 로또
     assert [t for t, _ in sends] == [
         "이번 주 복권을 샀어요 🍀\n연금복권 342회: 1-5조 123456\n"
-        f"로또 {LOTTO_ROUND}회: 3, 11, 17, 25, 38, 42 / 3, 11, 17, 25, 38, 42 / 3, 11, 17, 25, 38, 42\n(이번 주 8,000원 / 한도 8,000원)",
+        f"로또 {LOTTO_ROUND}회: 3, 11, 17, 25, 38, 42 / 3, 11, 17, 25, 38, 42 / 3, 11, 17, 25, 38, 42\n(이번 주 8,000원 · 설정한 한도 8,000원 안)",
         "연금복권 5주치를 예약했어요 343-347회 · 2만 5,000원"], sends
     assert "🚨" not in sends[1][0] and not pings and last["ok"] is True, (pings, last)
     attempt = lotto.load_state()["pension_reserve_attempts"]
@@ -1313,7 +1313,7 @@ def test_week_cap_pension_already_bought_lotto_3_only():
     reset()
     run_buy([pension_order(PENSION_ROUND, 5)])
     assert ("execBuy", 3) in calls and not paid("pension"), calls
-    assert len(sends) == 1 and sends[0][0].endswith("(이번 주 8,000원 / 한도 8,000원)") and "연금복권" not in sends[0][0], sends
+    assert len(sends) == 1 and sends[0][0].endswith("(이번 주 8,000원 · 설정한 한도 8,000원 안)") and "연금복권" not in sends[0][0], sends
 
 
 def test_week_cap_all_bought_buys_nothing():
@@ -1356,12 +1356,12 @@ def test_purchase_message():
     assert text == ("이번 주 복권을 샀어요 🍀\n"
                     "연금복권 342회: 1-5조 123456\n"
                     f"로또 {LOTTO_ROUND}회: 3, 11, 17, 25, 38, 42 / 3, 11, 17, 25, 38, 42 / 3, 11, 17, 25, 38, 42\n"
-                    "(이번 주 8,000원 / 한도 8,000원)"), text
+                    "(이번 주 8,000원 · 설정한 한도 8,000원 안)"), text
     assert "🚨" not in text and briefs
     r = {L: 1251, P: 342}
     assert lotto.purchase_message(r, {"연금720": {"error": "x"}, "로또": {"error": "y"}}, 0) is None
     assert lotto.purchase_message(r, {"로또": {"games": 2, "numbers": []}}, 2000) == \
-        "이번 주 복권을 샀어요 🍀\n로또 1251회: 자동 2게임 (번호는 구매내역에서)\n(이번 주 2,000원 / 한도 8,000원)"
+        "이번 주 복권을 샀어요 🍀\n로또 1251회: 자동 2게임 (번호는 구매내역에서)\n(이번 주 2,000원 · 설정한 한도 8,000원 안)"
     assert lotto.reserve_message(NEXT5, 25000) == "연금복권 5주치를 예약했어요 343-347회 · 2만 5,000원"
     reset()
     lotto.DRY = True
@@ -1937,7 +1937,7 @@ def test_not_bought_this_week_alert():
         captured(lotto.cmd_check)
 
     check(enabled=True, lotto_games=0)                            # PC 는 켜져 있는데 이번 주 로또를 한 게임도 안 샀다
-    assert len(pings) == 1 and pings[0][0][2] == "이번 주 안 샀어" and f"로또 {this_round}회" in pings[0][0][3], pings
+    assert len(pings) == 1 and pings[0][0][2] == "이번 주 안 샀어요" and f"로또 {this_round}회" in pings[0][0][3], pings
     assert "연금" not in pings[0][0][3]                           # 연금은 샀다
     pings.clear()
     captured(lotto.cmd_check)                                     # 회차당 한 번

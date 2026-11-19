@@ -157,7 +157,7 @@ class PensionGame:
         self.user_id = found.group(1) if found else ""
         self._jsid = self._el_jsessionid()
         if not self._jsid or not self.user_id:
-            raise PensionError("연금복권 게임 세션을 못 열었어 (로그인 풀림·점검 중일 수 있음)")
+            raise PensionError("연금복권 게임 세션을 못 열었어요 (로그인 풀림·점검 중일 수 있음)")
 
     def _headers(self) -> dict:
         return {"User-Agent": DESKTOP_UA, "X-Requested-With": "XMLHttpRequest", "Referer": self._referer, "Origin": EL,
@@ -182,7 +182,7 @@ class PensionGame:
         try:
             data = as_dict(decrypt(outer["q"], passphrase))
         except (ValueError, KeyError, TypeError) as e:
-            raise PensionError(f"{path} 응답을 못 풀었어") from e
+            raise PensionError(f"{path} 응답을 못 풀었어요") from e
         if data is None:
             raise PensionError(f"{path} 풀어낸 응답이 JSON 객체가 아님")
         return data
@@ -440,7 +440,7 @@ def fetch_winning(session: requests.Session | None = None) -> dict[int, dict]:
         except (KeyError, ValueError, TypeError):
             continue
     if not out:
-        raise PensionError("연금복권 당첨번호 목록이 비었어")
+        raise PensionError("연금복권 당첨번호 목록이 비었어요")
     return out
 
 
