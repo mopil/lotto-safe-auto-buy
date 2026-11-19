@@ -16,6 +16,7 @@
 
 ```
 mopil/lotto-safe-auto-buy 로 로또 자동 구매를 시작하게 도와줘.
+0. gh(GitHub CLI)가 없으면 설치해줘 (Windows: winget install GitHub.cli · Mac: brew install gh). 로그인이 안 돼 있으면 gh auth login 은 내가 직접 할게
 1. 이 템플릿으로 내 Private 레포를 만들어줘 (gh repo create <이름> --private --template mopil/lotto-safe-auto-buy)
 2. 그 레포의 Secrets 등록 페이지를 브라우저로 열어줘. LOTTO_SECRETS 는 내가 직접 넣을게. 비밀번호는 묻지 마
 3. 다 넣었다고 하면 무엇을 살지 · 로또 게임 수 · 연금 방식 · 텔레그램 알림을 물어보고 "① 설정" 을 그 값으로 실행해줘
