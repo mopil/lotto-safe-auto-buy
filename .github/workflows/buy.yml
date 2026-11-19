@@ -1,0 +1,58 @@
+name: "구매"
+
+# 매주 월요일 오전(KST) — 수요일 오전은 보충 실행(이미 샀으면 로그인도 안 하고 끝난다).
+# 손으로 돌릴 땐 '시험 실행(dry-run)' 을 켜면 사지 않고 할 일만 보여준다.
+on:
+  schedule:
+    - cron: "10 0 * * 1"   # 월 09:10 KST
+    - cron: "10 0 * * 3"   # 수 09:10 KST (보충)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "시험 실행 (사지 않음)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+# 한 번에 하나만. 먼저 뜬 실행을 취소하지 않는다 — 결제 중간에 끊기면 안 되니까
+concurrency:
+  group: lotto
+  cancel-in-progress: false
+
+jobs:
+  buy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 상태 브랜치(state) 꺼내기 — 없으면 멈춤
+        run: |
+          git config user.name "lotto-safe-auto-buy"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git ls-remote --exit-code --heads origin state >/dev/null; then
+            echo "::error::아직 설정 전이에요. Actions 탭에서 '① 설정' 을 먼저 실행해 주세요."
+            exit 1
+          fi
+          git fetch origin state:state
+          git worktree add .state state
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: 구매
+        env:
+          LOTTO_BACKEND: actions
+          LOTTO_STATE_DIR: ${{ github.workspace }}/.state
+          LOTTO_SECRETS: ${{ secrets.LOTTO_SECRETS }}
+          LOTTO_JITTER: ${{ github.event_name == 'schedule' && '1' || '0' }}
+          DRY_FLAG: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '--dry-run' || '' }}
+        run: python lotto_safe/lotto.py buy $DRY_FLAG

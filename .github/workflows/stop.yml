@@ -1,0 +1,45 @@
+name: "② 멈춤"
+
+# 자동 구매를 끈다. 다시 켜려면 '① 설정' 을 실행.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lotto
+  cancel-in-progress: false
+
+jobs:
+  stop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 상태 브랜치(state) 꺼내기
+        run: |
+          git config user.name "lotto-safe-auto-buy"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git ls-remote --exit-code --heads origin state >/dev/null; then
+            echo "아직 설정 전이라 끌 것이 없어요." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git fetch origin state:state
+          git worktree add .state state
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 끄기
+        if: hashFiles('.state/README.md') != ''
+        env:
+          LOTTO_BACKEND: actions
+          LOTTO_STATE_DIR: ${{ github.workspace }}/.state
+        run: |
+          pip install -r requirements.txt
+          python lotto_safe/configure.py stop

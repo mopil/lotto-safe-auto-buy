@@ -1,0 +1,75 @@
+name: "① 설정"
+
+# 처음 한 번, 그리고 설정을 바꿀 때 실행. 구매는 하지 않는다 — 로그인 확인 · 텔레그램 연결 · 설정 저장 · 켜기.
+on:
+  workflow_dispatch:
+    inputs:
+      buy:
+        description: "무엇을 살까요?"
+        type: choice
+        options: ["둘 다", "로또만", "연금만"]
+        default: "둘 다"
+      lotto_games:
+        description: "로또 회차당 게임 수 (1게임 = 1,000원 · 최대 5)"
+        type: choice
+        options: ["1", "2", "3", "4", "5"]
+        default: "1"
+      pension_mode:
+        description: "연금복권 구매 방식 (1세트 = 5장 = 5,000원)"
+        type: choice
+        options: ["매주 직접 구매", "5회차 예약 (실험적)"]
+        default: "매주 직접 구매"
+      telegram:
+        description: "텔레그램 알림"
+        type: choice
+        options: ["받음", "안 받음"]
+        default: "받음"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lotto
+  cancel-in-progress: false
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 상태 브랜치(state) 꺼내기 — 없으면 만든다
+        run: |
+          git config user.name "lotto-safe-auto-buy"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin state >/dev/null; then
+            git fetch origin state:state
+            git worktree add .state state
+          else
+            git worktree add --orphan -b state .state
+            echo "# 자동 구매 상태 기록 — 손대지 마세요 (시도 기록이 있어야 두 번 사지 않아요)" > .state/README.md
+            git -C .state add README.md
+            git -C .state commit -q -m "state 브랜치 시작"
+            git -C .state push -q origin HEAD:state
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: 설정 · 로그인 확인 · 텔레그램 연결
+        env:
+          LOTTO_BACKEND: actions
+          LOTTO_STATE_DIR: ${{ github.workspace }}/.state
+          LOTTO_SECRETS: ${{ secrets.LOTTO_SECRETS }}
+          FORM_BUY: ${{ inputs.buy }}
+          FORM_LOTTO_GAMES: ${{ inputs.lotto_games }}
+          FORM_PENSION_MODE: ${{ inputs.pension_mode }}
+          FORM_TELEGRAM: ${{ inputs.telegram }}
+        run: python lotto_safe/configure.py setup
