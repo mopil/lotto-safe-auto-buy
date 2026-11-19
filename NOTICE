@@ -1,0 +1,13 @@
+lotto-safe-auto-buy
+Copyright (c) 2026 mopil — MIT License (LICENSE)
+
+이 프로젝트는 아래 오픈소스를 의존성으로 사용합니다 (코드를 복사해 넣지 않고 pip 로 설치).
+
+- dhapi (비공식 동행복권 API) 4.2.4 — https://github.com/roeniss/dhlottery-api
+  Licensed under the Apache License, Version 2.0
+  http://www.apache.org/licenses/LICENSE-2.0
+  lotto_safe/lotto.py 는 dhapi 4.2.4 의 내부(비공개) 메서드를 호출합니다 — 버전을 고정한 이유.
+
+연금복권720+ 구매 요청 모양은 공개된 구현(umi-corp/autolotto720)과 동행복권 공개 페이지를 대조해 정했습니다.
+
+이 프로젝트는 동행복권과 관련이 없습니다. "동행복권"·"로또 6/45"·"연금복권720+" 은 각 권리자의 상표입니다.
